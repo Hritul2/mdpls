@@ -226,7 +226,7 @@ func (s *Server) serveIndex(w http.ResponseWriter, dir, clean string, partial bo
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, `<h1 title="%s">%s</h1>`+"\n", html.EscapeString(tildePath(filepath.Join(s.root, filepath.FromSlash(prefix)))), html.EscapeString(heading))
+	fmt.Fprintf(&b, `<h1 class="mdpls-title" data-path="%s">%s</h1>`+"\n", html.EscapeString(tildePath(filepath.Join(s.root, filepath.FromSlash(prefix)))), html.EscapeString(heading))
 	plural := "s"
 	if len(files) == 1 {
 		plural = ""

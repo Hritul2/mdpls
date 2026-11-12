@@ -209,6 +209,14 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
 .markdown-body .footnotes { font-size: 0.875em; color: var(--muted); }
 
 /* Index pages: a collapsible folder tree */
+.markdown-body h1.mdpls-title { position: relative; display: inline-block; cursor: default; }
+.markdown-body h1.mdpls-title::after {
+  content: attr(data-path); position: absolute; left: 0; top: 100%; margin-top: 0.25rem;
+  font: 400 0.8rem var(--font-mono); color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 0.3em 0.6em;
+  white-space: nowrap; pointer-events: none; opacity: 0; z-index: 10;
+}
+.markdown-body h1.mdpls-title:hover::after { opacity: 1; }
 .mdpls-meta { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.875em; padding-bottom: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
 .mdpls-btn {
   font: inherit; color: var(--accent); background: transparent; border: 0;
