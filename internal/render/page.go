@@ -211,12 +211,15 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
 
 /* Credit, bottom right */
 .mdpls-credit {
-  position: fixed; right: 1rem; bottom: 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem;
-  font-size: 0.75rem; color: var(--muted); text-decoration: none;
-  background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 0.25rem 0.7rem;
-  transition: color 150ms ease, border-color 150ms ease;
+  position: fixed; right: 1.25rem; bottom: 0.9rem; display: inline-flex; align-items: center; gap: 0.45rem;
+  font: 600 0.68rem var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none;
+  /* engraved: text sits a shade off the page colour, lit edge below, shadow edge above */
+  color: color-mix(in srgb, var(--text) 32%, var(--bg));
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--text) 16%, transparent), 0 -1px 0 rgba(0, 0, 0, 0.28);
+  transition: color 200ms ease-out;
 }
-.mdpls-credit:hover { color: var(--accent); border-color: var(--accent); }
+.mdpls-credit svg { filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--text) 16%, transparent)) drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.28)); }
+.mdpls-credit:hover { color: color-mix(in srgb, var(--text) 55%, var(--bg)); }
 @media print { .mdpls-credit { display: none; } }
 
 /* Index pages: a collapsible folder tree */
