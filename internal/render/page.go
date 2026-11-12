@@ -214,9 +214,15 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
   content: attr(data-path); position: absolute; left: 0; top: 100%; margin-top: 0.25rem;
   font: 400 0.8rem var(--font-mono); color: var(--text); background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px; padding: 0.3em 0.6em;
-  white-space: nowrap; pointer-events: none; opacity: 0; z-index: 10;
+  white-space: nowrap; pointer-events: none; z-index: 10;
+  opacity: 0; filter: blur(4px); transform: translateY(-3px);
+  transition: opacity 100ms ease-out, filter 100ms ease-out, transform 100ms ease-out;
 }
-.markdown-body h1.mdpls-title:hover::after { opacity: 1; }
+.markdown-body h1.mdpls-title:hover::after {
+  opacity: 1; filter: blur(0); transform: none;
+  transition-duration: 160ms;
+}
+@media (prefers-reduced-motion: reduce) { .markdown-body h1.mdpls-title::after { transition: none; filter: none; transform: none; } }
 .mdpls-meta { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.875em; padding-bottom: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
 .mdpls-btn {
   font: inherit; color: var(--accent); background: transparent; border: 0;
