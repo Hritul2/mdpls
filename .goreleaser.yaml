@@ -1,0 +1,57 @@
+# Release with: git tag v0.1.0 && git push origin v0.1.0
+# (the release workflow runs goreleaser; see README "Releasing").
+version: 2
+project_name: mdpls
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env: [CGO_ENABLED=0]
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags: -s -w -X main.version={{.Version}}
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [README.md, LICENSE]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]
+
+# Homebrew: publishes Formula/mdpls.rb to github.com/Hritul2/homebrew-tap,
+# so users can `brew install Hritul2/tap/mdpls`.
+brews:
+  - name: mdpls
+    repository:
+      owner: Hritul2
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/Hritul2/mdpls
+    description: Preview a repo's markdown in the browser, live
+    license: MIT
+    install: |
+      bin.install "mdpls"
+    test: |
+      assert_match "mdpls", shell_output("#{bin}/mdpls --version")
+
+# Linux packages, attached to each GitHub release.
+nfpms:
+  - package_name: mdpls
+    vendor: Hritul Srivastava
+    homepage: https://github.com/Hritul2/mdpls
+    maintainer: Hritul Srivastava
+    description: Preview a repo's markdown in the browser, live
+    license: MIT
+    formats: [deb, rpm, apk]

@@ -1,0 +1,5 @@
+/mdpls
+/mdpls.exe
+/dist/
+*.test
+*.out
