@@ -30,14 +30,54 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
 {{if .Live}}<script>
 (function () {
   var base = document.title, index = {{.Index}};
+  var md = document.getElementById('md');
+
+  // Index pages: remember which folders are open (per browser), so live
+  // refreshes and reloads don't collapse them.
+  var KEY = 'mdpls:open-folders';
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } }
+  function save() {
+    var open = load().filter(function (p) { return !md.querySelector('details[data-dir="' + CSS.escape(p) + '"]'); });
+    md.querySelectorAll('details[data-dir][open]').forEach(function (d) { open.push(d.dataset.dir); });
+    try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {}
+  }
+  function restore() {
+    load().forEach(function (p) {
+      var d = md.querySelector('details[data-dir="' + CSS.escape(p) + '"]');
+      if (d) d.open = true;
+    });
+  }
+  function setAll(open) {
+    md.querySelectorAll('details[data-dir]').forEach(function (d) { d.open = open; });
+    save();
+  }
+  function controls() {
+    var meta = md.querySelector('.mdpls-meta');
+    if (!meta || !md.querySelector('details[data-dir]') || meta.querySelector('button')) return;
+    [['expand all', true], ['collapse all', false]].forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'mdpls-btn'; btn.textContent = c[0];
+      btn.onclick = function () { setAll(c[1]); };
+      meta.appendChild(btn);
+    });
+  }
+  if (index) {
+    restore(); controls();
+    document.addEventListener('toggle', function (e) { if (e.target.matches && e.target.matches('details[data-dir]')) save(); }, true);
+  }
+
   var es = new EventSource('/__mdpls/events');
   es.onopen = function () { document.title = base; };
-  es.onerror = function () { document.title = '⏸ ' + base; };
+  es.onerror = function () { document.title = '\u23F8 ' + base; };
   es.onmessage = function (e) {
     if (!index && e.data !== decodeURIComponent(location.pathname)) return;
     fetch(location.pathname + '?partial=1', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.text() : null; })
-      .then(function (h) { if (h !== null) document.getElementById('md').innerHTML = h; });
+      .then(function (h) {
+        if (h === null) return;
+        md.innerHTML = h;
+        if (index) { restore(); controls(); }
+      });
   };
 })();
 </script>{{end}}
@@ -164,8 +204,40 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
 .markdown-body summary { cursor: pointer; }
 .markdown-body .footnotes { font-size: 0.875em; color: var(--muted); }
 
-/* Index pages */
-.mdpls-meta { color: var(--muted); }
+/* Index pages: a collapsible folder tree */
+.mdpls-meta { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.mdpls-btn {
+  font: inherit; font-size: 0.8em; color: var(--muted); background: transparent;
+  border: 1px solid var(--border); border-radius: 999px; padding: 0.15em 0.75em; cursor: pointer;
+}
+.mdpls-btn:hover { color: var(--text); border-color: var(--muted); }
+.markdown-body ul.mdpls-tree { list-style: none; margin: 0; padding-left: 0; }
+.markdown-body ul.mdpls-tree ul.mdpls-tree {
+  margin-left: 0.55rem; padding-left: 1rem;
+  border-left: 1px solid var(--border);
+}
+.markdown-body ul.mdpls-tree li { margin: 0.1rem 0; }
+.markdown-body .mdpls-dir { margin: 0; }
+.markdown-body .mdpls-dir > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.2rem 0; color: var(--text); font-weight: 500; user-select: none;
+}
+.markdown-body .mdpls-dir > summary::-webkit-details-marker { display: none; }
+.markdown-body .mdpls-dir > summary::before {
+  content: ""; width: 0.4rem; height: 0.4rem; flex: none;
+  border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted);
+  transform: rotate(-45deg); transition: transform 120ms ease; margin: 0 0.15rem;
+}
+.markdown-body .mdpls-dir[open] > summary::before { transform: rotate(45deg); }
+.markdown-body .mdpls-dir > summary:hover .mdpls-name { color: var(--accent); }
+.markdown-body .mdpls-count {
+  font-size: 0.75em; color: var(--muted); font-weight: 400;
+  border: 1px solid var(--border); border-radius: 999px; padding: 0 0.5em; line-height: 1.5;
+}
+.markdown-body .mdpls-file { padding: 0.15rem 0 0.15rem 1.1rem; }
+.markdown-body .mdpls-file a { text-decoration: none; color: var(--text); }
+.markdown-body .mdpls-file a:hover { color: var(--accent); text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .markdown-body .mdpls-dir > summary::before { transition: none; } }
 `
 
 // CSS builds the full stylesheet for a theme: variables, layout, and the

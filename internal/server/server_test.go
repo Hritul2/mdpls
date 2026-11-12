@@ -22,6 +22,7 @@ func repo(t *testing.T) string {
 		"README.md":           "# Readme\n\nSee [guide](docs/guide.md).\n",
 		"docs/guide.md":       "---\ntitle: hidden\n---\n# Guide\n\n## Second Part\n",
 		"docs/my notes.md":    "# Notes\n",
+		"docs/api/ref.md":     "# Ref\n",
 		"docs/img.png":        "\x89PNG\r\n\x1a\nfake",
 		"node_modules/x/a.md": "# should be ignored\n",
 		".git/HEAD":           "ref: x\n",
@@ -244,4 +245,28 @@ func TestLiveReloadEvents(t *testing.T) {
 		time.Sleep(300 * time.Millisecond)
 		os.WriteFile(filepath.Join(root, "new", "fresh.md"), []byte("# Fresh\n"), 0o644)
 	})
+}
+
+func TestIndexIsANestedTree(t *testing.T) {
+	body := get(t, newServer(t, repo(t)), "/").Body.String()
+	docs := strings.Index(body, `<details class="mdpls-dir" data-dir="docs">`)
+	api := strings.Index(body, `<details class="mdpls-dir" data-dir="docs/api">`)
+	ref := strings.Index(body, `href="/docs/api/ref.md"`)
+	guide := strings.Index(body, `href="/docs/guide.md"`)
+	readme := strings.Index(body, `href="/README.md"`)
+	if docs < 0 || api < 0 {
+		t.Fatalf("folders not rendered as <details>:\n%s", body)
+	}
+	// docs/ contains docs/api/, which contains ref.md; folders come before files.
+	if !(docs < api && api < ref && ref < guide) {
+		t.Fatalf("wrong nesting/order: docs=%d api=%d ref=%d guide=%d\n%s", docs, api, ref, guide, body)
+	}
+	// Root files sit outside every folder, after them.
+	if readme < strings.LastIndex(body, "</details>") {
+		t.Fatalf("README.md should be a root entry after the folders:\n%s", body)
+	}
+	// Each folder shows how many markdown files it holds (recursively).
+	if !strings.Contains(body, `docs</span><span class="mdpls-count">3</span>`) {
+		t.Fatalf("docs folder count missing or wrong:\n%s", body)
+	}
 }

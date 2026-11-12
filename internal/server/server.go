@@ -219,8 +219,10 @@ func escapePath(rel string) string {
 func (s *Server) serveIndex(w http.ResponseWriter, dir, clean string, partial bool) {
 	files := s.markdownFiles(dir, MaxIndexFiles)
 	heading := filepath.Base(s.root)
+	prefix := "" // the listed directory, relative to root, with a trailing slash
 	if clean != "/" {
 		heading = strings.TrimPrefix(clean, "/")
+		prefix = heading + "/"
 	}
 
 	var b strings.Builder
@@ -235,24 +237,69 @@ func (s *Server) serveIndex(w http.ResponseWriter, dir, clean string, partial bo
 	}
 	b.WriteString("</p>\n")
 
-	lastDir := "\x00"
+	tree := newDirNode("", strings.TrimSuffix(prefix, "/"))
 	for _, f := range files {
-		d := path.Dir(f)
-		if d != lastDir {
-			if lastDir != "\x00" {
-				b.WriteString("</ul>\n")
-			}
-			label := d
-			if d == "." {
-				label = "(root)"
-			}
-			fmt.Fprintf(&b, "<h3>%s</h3>\n<ul>\n", html.EscapeString(label))
-			lastDir = d
-		}
-		fmt.Fprintf(&b, "<li><a href=\"%s\">%s</a></li>\n", escapePath(f), html.EscapeString(path.Base(f)))
+		tree.add(f, strings.TrimPrefix(f, prefix))
 	}
-	if lastDir != "\x00" {
-		b.WriteString("</ul>\n")
-	}
+	tree.render(&b)
 	s.page(w, http.StatusOK, render.Doc{Title: heading, Body: []byte(b.String()), Live: true, Index: true}, partial)
+}
+
+// dirNode is one folder in the index tree.
+type dirNode struct {
+	name  string // display name
+	path  string // path from the root, e.g. "docs/api"
+	dirs  map[string]*dirNode
+	files []string // paths from the root
+	count int      // markdown files in this folder and below
+}
+
+func newDirNode(name, p string) *dirNode {
+	return &dirNode{name: name, path: p, dirs: map[string]*dirNode{}}
+}
+
+// add places file (a path from the root) using rel, its path below this node.
+func (d *dirNode) add(file, rel string) {
+	d.count++
+	i := strings.Index(rel, "/")
+	if i < 0 {
+		d.files = append(d.files, file)
+		return
+	}
+	name := rel[:i]
+	child := d.dirs[name]
+	if child == nil {
+		childPath := name
+		if d.path != "" {
+			childPath = d.path + "/" + name
+		}
+		child = newDirNode(name, childPath)
+		d.dirs[name] = child
+	}
+	child.add(file, rel[i+1:])
+}
+
+// render writes folders (collapsible, alphabetical) before files, like a file
+// explorer.
+func (d *dirNode) render(b *strings.Builder) {
+	if len(d.dirs) == 0 && len(d.files) == 0 {
+		return
+	}
+	b.WriteString(`<ul class="mdpls-tree">` + "\n")
+	names := make([]string, 0, len(d.dirs))
+	for n := range d.dirs {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		c := d.dirs[n]
+		fmt.Fprintf(b, `<li><details class="mdpls-dir" data-dir="%s"><summary><span class="mdpls-name">%s</span><span class="mdpls-count">%d</span></summary>`+"\n",
+			html.EscapeString(c.path), html.EscapeString(c.name), c.count)
+		c.render(b)
+		b.WriteString("</details></li>\n")
+	}
+	for _, f := range d.files {
+		fmt.Fprintf(b, `<li class="mdpls-file"><a href="%s">%s</a></li>`+"\n", escapePath(f), html.EscapeString(path.Base(f)))
+	}
+	b.WriteString("</ul>\n")
 }

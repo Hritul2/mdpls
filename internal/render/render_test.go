@@ -123,3 +123,13 @@ func TestCSSColorScheme(t *testing.T) {
 		t.Fatal("CSS should follow theme.color_scheme and set tab-size")
 	}
 }
+
+func TestIndexPageKeepsFoldersOpenAcrossRefresh(t *testing.T) {
+	page, err := Page(Doc{Title: "x", Body: []byte("<p>x</p>"), Live: true, Index: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(page), "details[data-dir]") {
+		t.Fatal("index page script should restore open folders")
+	}
+}

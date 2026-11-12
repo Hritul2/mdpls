@@ -17,7 +17,9 @@ mdpls  serving /Users/you/your-repo
 
 - **Whole repo, not one file.** mdpls serves the git root, so relative links
   between docs (`[setup](docs/setup.md#install)`), images, and anchors just work.
-  `/` lists every markdown file.
+  `/` shows every markdown file as a collapsible folder tree (folders first,
+  file counts, expand/collapse all). Open folders are remembered across
+  refreshes.
 - **Live.** Save a file and the open page updates in place — no reload, no lost
   scroll position. New files show up in the index on their own.
 - **GitHub-flavored.** Tables, task lists, strikethrough, autolinks, footnotes,
