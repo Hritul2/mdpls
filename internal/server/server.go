@@ -226,7 +226,7 @@ func (s *Server) serveIndex(w http.ResponseWriter, dir, clean string, partial bo
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "<h1>%s</h1>\n", html.EscapeString(heading))
+	fmt.Fprintf(&b, `<h1 title="%s">%s</h1>`+"\n", html.EscapeString(tildePath(filepath.Join(s.root, filepath.FromSlash(prefix)))), html.EscapeString(heading))
 	plural := "s"
 	if len(files) == 1 {
 		plural = ""
@@ -242,7 +242,44 @@ func (s *Server) serveIndex(w http.ResponseWriter, dir, clean string, partial bo
 		tree.add(f, strings.TrimPrefix(f, prefix))
 	}
 	tree.render(&b)
+	out := strings.Replace(b.String(), `<p class="mdpls-meta">`+fmt.Sprintf("%d markdown file%s", len(files), plural),
+		`<p class="mdpls-meta">`+fmt.Sprintf("%d markdown file%s", len(files), plural)+folderSummary(tree.folderCount()), 1)
+	b.Reset()
+	b.WriteString(out)
 	s.page(w, http.StatusOK, render.Doc{Title: heading, Body: []byte(b.String()), Live: true, Index: true}, partial)
+}
+
+// tildePath shortens a path under the home directory to ~/...
+func tildePath(p string) string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return p
+	}
+	if p == home {
+		return "~"
+	}
+	if strings.HasPrefix(p, home+string(filepath.Separator)) {
+		return "~" + p[len(home):]
+	}
+	return p
+}
+
+func folderSummary(n int) string {
+	switch n {
+	case 0:
+		return ""
+	case 1:
+		return " · 1 folder"
+	}
+	return fmt.Sprintf(" · %d folders", n)
+}
+
+func (d *dirNode) folderCount() int {
+	n := len(d.dirs)
+	for _, c := range d.dirs {
+		n += c.folderCount()
+	}
+	return n
 }
 
 // dirNode is one folder in the index tree.

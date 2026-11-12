@@ -270,3 +270,16 @@ func TestIndexIsANestedTree(t *testing.T) {
 		t.Fatalf("docs folder count missing or wrong:\n%s", body)
 	}
 }
+
+func TestTildePathAndFolderSummary(t *testing.T) {
+	home, _ := os.UserHomeDir()
+	if got := tildePath(filepath.Join(home, "a", "b")); got != "~/a/b" {
+		t.Fatalf("tildePath = %q", got)
+	}
+	if got := tildePath("/etc/x"); got != "/etc/x" {
+		t.Fatalf("tildePath outside home = %q", got)
+	}
+	if folderSummary(0) != "" || folderSummary(1) != " · 1 folder" || folderSummary(3) != " · 3 folders" {
+		t.Fatal("folderSummary wrong")
+	}
+}

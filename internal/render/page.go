@@ -54,12 +54,16 @@ var pageTmpl = template.Must(template.New("page").Parse(`<!doctype html>
   function controls() {
     var meta = md.querySelector('.mdpls-meta');
     if (!meta || !md.querySelector('details[data-dir]') || meta.querySelector('button')) return;
-    [['expand all', true], ['collapse all', false]].forEach(function (c) {
-      var btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'mdpls-btn'; btn.textContent = c[0];
-      btn.onclick = function () { setAll(c[1]); };
-      meta.appendChild(btn);
-    });
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'mdpls-btn';
+    function sync() {
+      var all = !md.querySelector('details[data-dir]:not([open])');
+      btn.textContent = all ? 'Collapse all' : 'Expand all';
+      btn.dataset.open = all ? '1' : '';
+    }
+    btn.onclick = function () { setAll(!btn.dataset.open); sync(); };
+    meta.appendChild(btn); sync();
+    md.addEventListener('toggle', sync, true);
   }
   if (index) {
     restore(); controls();
@@ -205,12 +209,12 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
 .markdown-body .footnotes { font-size: 0.875em; color: var(--muted); }
 
 /* Index pages: a collapsible folder tree */
-.mdpls-meta { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.mdpls-meta { color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.875em; padding-bottom: 0.75rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
 .mdpls-btn {
-  font: inherit; font-size: 0.8em; color: var(--muted); background: transparent;
-  border: 1px solid var(--border); border-radius: 999px; padding: 0.15em 0.75em; cursor: pointer;
+  font: inherit; color: var(--accent); background: transparent; border: 0;
+  padding: 0.1em 0.25em; cursor: pointer; border-radius: 4px;
 }
-.mdpls-btn:hover { color: var(--text); border-color: var(--muted); }
+.mdpls-btn:hover { text-decoration: underline; }
 .markdown-body ul.mdpls-tree { list-style: none; margin: 0; padding-left: 0; }
 .markdown-body ul.mdpls-tree ul.mdpls-tree {
   margin-left: 0.55rem; padding-left: 1rem;
@@ -235,7 +239,7 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
   border: 1px solid var(--border); border-radius: 999px; padding: 0 0.5em; line-height: 1.5;
 }
 .markdown-body .mdpls-file { padding: 0.15rem 0 0.15rem 1.1rem; }
-.markdown-body .mdpls-file a { text-decoration: none; color: var(--text); }
+.markdown-body .mdpls-file a { text-decoration: none; color: var(--accent); }
 .markdown-body .mdpls-file a:hover { color: var(--accent); text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .markdown-body .mdpls-dir > summary::before { transition: none; } }
 `
