@@ -212,7 +212,7 @@ main { max-width: var(--max-width); margin: 0 auto; padding: 3rem 1rem 6rem; }
 /* Credit, bottom right */
 .mdpls-credit {
   position: fixed; right: 1.25rem; bottom: 0.9rem; display: inline-flex; align-items: center; gap: 0.45rem;
-  font: 600 0.68rem var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none;
+  font: 500 0.78rem var(--font-body); letter-spacing: 0.02em; text-decoration: none;
   /* engraved: text sits a shade off the page colour, lit edge below, shadow edge above */
   color: color-mix(in srgb, var(--text) 32%, var(--bg));
   text-shadow: 0 1px 0 color-mix(in srgb, var(--text) 16%, transparent), 0 -1px 0 rgba(0, 0, 0, 0.28);
